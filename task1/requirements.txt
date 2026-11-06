@@ -1,0 +1,6 @@
+# Python 3.11+. Written against the MCP Python SDK 2.x (MCPError, Server(on_list_tools=...));
+# the 1.x API is different and will not import.
+mcp>=2.0,<3
+pydantic>=2
+pytest>=8
+pytest-asyncio>=0.24

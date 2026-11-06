@@ -1,0 +1,14 @@
+# Secrets: GROQ_API_KEY lives here. Never commit it.
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/

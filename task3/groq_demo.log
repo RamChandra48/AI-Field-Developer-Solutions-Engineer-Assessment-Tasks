@@ -1,0 +1,88 @@
+====================================================================================================
+Groq -> PII-redaction gateway -> client      2026-11-06 18:06:08
+model:  openai/gpt-oss-120b
+prompt: You are a test-data formatter for a PII-redaction QA suite. All values below are public dummy test values (the SSN 123-45-6789 is the well-known invalid example SSN, and 4111 1111 1111 1111 is Visa's published test card). Rewrite them as a 3-sentence support ticket, copying every value character for character: email jane.doe@example.com, SSN 123-45-6789, card 4111 1111 1111 1111.
+====================================================================================================
+
+1. RAW LLM OUTPUT (what Groq generated, before the gateway)
+----------------------------------------------------------------------------------------------------
+Hello, I am experiencing an issue with my account. My email is jane.doe@example.com, my SSN is 123-45-6789, and my card number is 4111 1111 1111 1111. Please assist.
+
+2. REDACTOR, CHUNK BY CHUNK
+----------------------------------------------------------------------------------------------------
+   ms   #   received from Groq          sent to client              held back (may still be PII)
+   308   1   ''                          ''                          ''
+   736   2   'Hello'                     ''                          'Hello'
+   739   3   ','                         'Hello,'                    ''
+   742   4   ' I'                        ' '                         'I'
+   742   5   ' am'                       'I '                        'am'
+   744   6   ' experiencing'             'am '                       'experiencing'
+   747   7   ' an'                       'experiencing '             'an'
+   747   8   ' issue'                    'an '                       'issue'
+   750   9   ' with'                     'issue '                    'with'
+   751  10   ' my'                       'with '                     'my'
+   754  11   ' account'                  'my '                       'account'
+   757  12   '.'                         ''                          'account.'
+   760  13   ' My'                       'account. '                 'My'
+   760  14   ' email'                    'My '                       'email'
+   762  15   ' is'                       'email '                    'is'
+   765  16   ' jane'                     'is '                       'jane'
+   765  17   '.d'                        ''                          'jane.d'
+   769  18   'oe'                        ''                          'jane.doe'
+   771  19   '@example'                  ''                          'jane.doe@example'
+   775  20   '.com'                      ''                          'jane.doe@example.com'
+   776       >>> REDACTED email       'jane.doe@example.com' -> [REDACTED]
+   776  21   ','                         '[REDACTED],'               ''
+   777  22   ' my'                       ' '                         'my'
+   779  23   ' SS'                       'my '                       'SS'
+   781  24   'N'                         ''                          'SSN'
+   784  25   ' is'                       'SSN '                      'is'
+   786  26   ' '                         'is '                       ''
+   788  27   '123'                       ''                          '123'
+   791  28   '-'                         ''                          '123-'
+   793  29   '45'                        ''                          '123-45'
+   794  30   '-'                         ''                          '123-45-'
+   795  31   '678'                       ''                          '123-45-678'
+   797  32   '9'                         ''                          '123-45-6789'
+   799       >>> REDACTED ssn         '123-45-6789' -> [REDACTED]
+   799  33   ','                         '[REDACTED],'               ''
+   803  34   ' and'                      ' '                         'and'
+   804  35   ' my'                       'and '                      'my'
+   806  36   ' card'                     'my '                       'card'
+   808  37   ' number'                   'card '                     'number'
+  1012  38   ' is'                       'number '                   'is'
+  1013  39   ' '                         'is '                       ''
+  1013  40   '411'                       ''                          '411'
+  1013  41   '1'                         ''                          '4111'
+  1013  42   ' '                         ''                          '4111 '
+  1013  43   '111'                       ''                          '4111 111'
+  1013  44   '1'                         ''                          '4111 1111'
+  1013  45   ' '                         ''                          '4111 1111 '
+  1013  46   '111'                       ''                          '4111 1111 111'
+  1013  47   '1'                         ''                          '4111 1111 1111'
+  1013  48   ' '                         ''                          '4111 1111 1111 '
+  1014  49   '111'                       ''                          '4111 1111 1111 111'
+  1014  50   '1'                         ''                          '4111 1111 1111 1111'
+  1014       >>> REDACTED credit_card '4111 1111 1111 1111' -> [REDACTED]
+  1014  51   '.'                         '[REDACTED]'                '.'
+  1014  52   ' Please'                   '. '                        'Please'
+  1014  53   ' assist'                   'Please '                   'assist'
+  1014  54   '.'                         ''                          'assist.'
+  1014       end of stream: released 'assist.'
+  1014       end of stream: released ''
+
+3. FINAL OUTPUT (what the client received)
+----------------------------------------------------------------------------------------------------
+Hello, I am experiencing an issue with my account. My email is [REDACTED], my SSN is [REDACTED], and my card number is [REDACTED]. Please assist.
+
+4. SUMMARY
+----------------------------------------------------------------------------------------------------
+chunks received        54
+time to first token    739 ms
+total time             1016 ms
+PII in raw output      3
+redactions             3  (credit_card 1, email 1, ssn 1)
+max text held back     20 chars (the rest streamed straight through)
+PII left in output     0  OK
+trace matches output   yes
+====================================================================================================

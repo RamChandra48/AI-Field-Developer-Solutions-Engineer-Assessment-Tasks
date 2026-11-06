@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.env
+.DS_Store
+# written by run_demo.py / gateway.py --log-file; TRANSCRIPT.jsonl is the committed evidence
+tokens.env
+gateway.jsonl
+gateway.log
+.demo_tokens
